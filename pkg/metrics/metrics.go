@@ -22,8 +22,8 @@ func New() *Metrics {
 	ms := Metrics{
 		ImagePullDurationSecondsHistogram: prometheus.NewHistogramVec(prometheus.HistogramOpts{
 			Name:    ImagePullDurationSecondsBucketName,
-			Help:    "Duration of image pull operations.",
-			Buckets: []float64{1, 2, 5, 10, 15, 20, 30},
+			Help:    "Duration of image pull operations in seconds.",
+			Buckets: []float64{1, 2, 5, 10, 20, 30, 60, 120},
 		}, []string{"image"}),
 	}
 	prometheus.MustRegister(

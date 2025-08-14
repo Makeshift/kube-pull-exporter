@@ -13,7 +13,6 @@ import (
 	"os"
 	"regexp"
 	"strconv"
-	"strings"
 	"time"
 )
 
@@ -75,6 +74,7 @@ func GetPodsFromNamespace(namespace string) (*v1.PodList, error) {
 	if err != nil {
 		return nil, fmt.Errorf("Failed to get pods: %v", err)
 	}
+	
 	return podList, nil
 }
 
@@ -95,12 +95,12 @@ func (ms *MetricsServer) GetPodEvents(namespace, podName string) {
 		if event.Reason == "Pulled" && !regexp.MustCompile(`already present on machine`).MatchString(event.Message) {
 			message := event.Message
 			// Use regex to find the number representing the pull time
-			rePullTime := regexp.MustCompile(`(\d+\.\d+)(ms|s)`)
+			rePullTime := regexp.MustCompile(`in (\d+|(?:\d+\.\d+))(m?s)`)
 			pullTimeMatches := rePullTime.FindStringSubmatch(message)
 			// Regular expression to match the base image name
-			reBaseImageName := regexp.MustCompile(`[^(\/|\")]*:`)
-			baseImageNameMatches := reBaseImageName.FindStringSubmatch(message)
-			if len(pullTimeMatches) > 0 && len(baseImageNameMatches) > 0 {
+			imageName := regexp.MustCompile(`"(.+)" in`)
+			imageNameMatches := imageName.FindStringSubmatch(message)
+			if len(pullTimeMatches) > 0 && len(imageNameMatches) > 0 {
 				// Convert the matched string for pull time to a float64
 				pullTime, err := strconv.ParseFloat(pullTimeMatches[1], 64)
 				if err != nil {
@@ -110,10 +110,9 @@ func (ms *MetricsServer) GetPodEvents(namespace, podName string) {
 				if pullTimeMatches[2] == "ms" {
 					pullTime /= 1000
 				}
-				pulledImageName := strings.TrimSuffix(baseImageNameMatches[0], ":")
-				ms.Metrics.ImagePullDurationSecondsHistogram.WithLabelValues(pulledImageName).Observe(pullTime)
+				ms.Metrics.ImagePullDurationSecondsHistogram.WithLabelValues(imageNameMatches[1]).Observe(pullTime)
 			} else {
-				fmt.Println("No pull time found in the message.")
+				fmt.Println("No pull time found in the message: ", message)
 			}
 		}
 	}
