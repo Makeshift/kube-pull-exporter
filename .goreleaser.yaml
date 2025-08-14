@@ -11,8 +11,8 @@ builds:
       - CGO_ENABLED=0
     goos:
       - linux
-      - windows
-      - darwin
+      # - windows
+      # - darwin
 
 dockers:
   - image_templates:
@@ -31,6 +31,10 @@ dockers:
 
 docker_manifests:
   - name_template: "ghcr.io/makeshift/kube-pull-exporter:{{ .Version }}"
+    image_templates:
+      - "ghcr.io/makeshift/kube-pull-exporter:{{ .Version }}-amd64"
+      - "ghcr.io/makeshift/kube-pull-exporter:{{ .Version }}-arm64v8"
+  - name_template: "ghcr.io/makeshift/kube-pull-exporter:latest"
     image_templates:
       - "ghcr.io/makeshift/kube-pull-exporter:{{ .Version }}-amd64"
       - "ghcr.io/makeshift/kube-pull-exporter:{{ .Version }}-arm64v8"
